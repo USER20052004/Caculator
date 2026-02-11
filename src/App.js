@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 function App() {
   const [expr, setExpr] = useState('');
   const [result, setResult] = useState('');
+  const [hovered, setHovered] = useState(null);
 
   const styles = {
     app: {
@@ -10,66 +11,83 @@ function App() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#f3f4f6',
+      background: 'linear-gradient(135deg, #667eea, #764ba2)',
       fontFamily: 'Inter, Arial, sans-serif',
     },
+
     calc: {
       width: 360,
-      background: '#1f2937',
-      padding: 20,
-      borderRadius: 12,
-      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      padding: 25,
+      borderRadius: 20,
+      background: 'rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(20px)',
+      boxShadow: '0 15px 40px rgba(0,0,0,0.3)',
       color: '#fff',
+      animation: 'float 4s ease-in-out infinite',
     },
+
     display: {
-      height: 80,
-      background: '#111827',
-      borderRadius: 8,
-      padding: '8px 12px',
+      height: 90,
+      background: 'rgba(0,0,0,0.4)',
+      borderRadius: 15,
+      padding: '10px 15px',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'flex-end',
-      marginBottom: 14,
+      marginBottom: 20,
       overflow: 'hidden',
+      boxShadow: 'inset 0 4px 12px rgba(0,0,0,0.5)',
     },
+
     small: {
-      fontSize: 14,
-      color: '#9ca3af',
-      alignSelf: 'flex-end',
+      fontSize: 16,
+      color: '#d1d5db',
     },
+
     large: {
-      fontSize: 28,
-      color: '#ffffff',
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#fff',
       wordBreak: 'break-all',
     },
+
     keypad: {
       display: 'grid',
       gridTemplateColumns: 'repeat(4, 1fr)',
-      gap: 10,
+      gap: 12,
     },
+
     button: {
-      padding: 14,
+      padding: 16,
       fontSize: 18,
-      borderRadius: 8,
+      borderRadius: 12,
       border: 'none',
       cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
     },
+
     btnNumber: {
-      background: '#111827',
+      background: 'linear-gradient(145deg, #1f2937, #111827)',
       color: '#fff',
     },
+
     btnFunction: {
-      background: '#6b7280',
+      background: 'linear-gradient(145deg, #6b7280, #4b5563)',
       color: '#fff',
     },
+
     btnOperator: {
-      background: '#f59e0b',
+      background: 'linear-gradient(145deg, #f59e0b, #f97316)',
       color: '#000',
+      fontWeight: 'bold',
     },
+
     btnEquals: {
-      background: '#10b981',
+      background: 'linear-gradient(145deg, #10b981, #059669)',
       color: '#fff',
+      fontWeight: 'bold',
     },
   };
 
@@ -93,11 +111,10 @@ function App() {
       return;
     }
     try {
-      // eslint-disable-next-line no-eval
       const r = eval(sanitized);
       setResult(String(r));
       setExpr(String(r));
-    } catch (e) {
+    } catch {
       setResult('Error');
     }
   };
@@ -112,6 +129,16 @@ function App() {
 
   return (
     <div style={styles.app}>
+      <style>
+        {`
+          @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0px); }
+          }
+        `}
+      </style>
+
       <div style={styles.calc}>
         <div style={styles.display}>
           <div style={styles.small}>{expr || '0'}</div>
@@ -119,18 +146,24 @@ function App() {
         </div>
 
         <div style={styles.keypad}>
-          {buttons.map((b) => {
+          {buttons.map((b, index) => {
             const isNumber = /[0-9.]/.test(b);
             const isOperator = ['+', '-', '×', '÷'].includes(b);
             const isFunction = ['C', '←', '(', ')'].includes(b);
             const isEquals = b === '=';
 
-            const btnStyle = Object.assign({}, styles.button,
-              isNumber ? styles.btnNumber : {},
-              isOperator ? styles.btnOperator : {},
-              isFunction ? styles.btnFunction : {},
-              isEquals ? styles.btnEquals : {}
-            );
+            const btnStyle = {
+              ...styles.button,
+              ...(isNumber ? styles.btnNumber : {}),
+              ...(isOperator ? styles.btnOperator : {}),
+              ...(isFunction ? styles.btnFunction : {}),
+              ...(isEquals ? styles.btnEquals : {}),
+              transform: hovered === index ? 'scale(1.08)' : 'scale(1)',
+              boxShadow:
+                hovered === index
+                  ? '0 8px 20px rgba(0,0,0,0.5)'
+                  : '0 4px 10px rgba(0,0,0,0.3)',
+            };
 
             const handleClick = () => {
               if (b === 'C') return doClear();
@@ -139,13 +172,13 @@ function App() {
               append(b);
             };
 
-            const extraStyle = (b === '0') ? Object.assign({}, btnStyle, { gridColumn: 'span 2' }) : btnStyle;
-
             return (
               <button
                 key={b}
                 onClick={handleClick}
-                style={extraStyle}
+                style={b === '0' ? { ...btnStyle, gridColumn: 'span 2' } : btnStyle}
+                onMouseEnter={() => setHovered(index)}
+                onMouseLeave={() => setHovered(null)}
               >
                 {b}
               </button>
